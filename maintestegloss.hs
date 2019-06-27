@@ -1,15 +1,17 @@
+import qualified Graphics.Gloss.Game
 import Graphics.Gloss
-import Graphics.Gloss.Data.ViewPort
+import Graphics.Gloss.Interface.Pure.Game
 
-type Model = (Float, Float)
+type World = (Float, Float)
 
 main::IO()
-main = simulate
+main = play
  windowDisplay
  white
  simulationRate
  initialModel
  drawingFunc
+ inputHandler
  updateFunc
  where
 
@@ -19,11 +21,25 @@ main = simulate
   simulationRate :: Int
   simulationRate = 20
 
-  initialModel :: Model
+  initialModel :: World
   initialModel = (0,0)
 
-  drawingFunc :: Model -> Picture
-  drawingFunc (theta, dtheta) = Line [(0, 0), (50 * cos theta, 50 * sin theta)]
+  drawingFunc :: World -> Picture
+  drawingFunc (x, y) = translate x y (Circle 20)
 
-  updateFunc :: ViewPort -> Float -> Model -> Model
-  updateFunc _ dt (theta, dtheta) = (theta + dt * dtheta, dtheta - dt * (cos theta))
+  inputHandler :: Event -> World -> World
+  inputHandler (EventKey (SpecialKey KeyUp) Down _ _) (x, y) = (x, y + 10)
+  inputHandler (EventKey (SpecialKey KeyDown) Down _ _) (x, y) = (x, y - 10)
+  inputHandler (EventKey (SpecialKey KeyRight) Down _ _) (x, y) = (x + 10, y)
+  inputHandler (EventKey (SpecialKey KeyLeft) Down _ _) (x, y) = (x - 10, y)
+  inputHandler _ w = w
+
+  updateFunc :: Float -> World -> World
+  updateFunc _ (x, y) = (towardCenter x, towardCenter y)
+   where
+    towardCenter :: Float -> Float
+    towardCenter c = if abs c < 0.25
+     then 0
+     else if c > 0
+      then c - 0.25
+      else c + 0.25
