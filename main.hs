@@ -1,15 +1,7 @@
-module Main(main) where
+import person.hs
 
-import Graphics.Gloss
+data Point= Point{x::Int, y::Int}		--cria um tipo ponto para setar a posição de um personagem no mapa
+ deriving(Show)
 
-window :: Display
-window = InWindow "Nice Window" (200, 200) (10, 10)
-
-background :: Color
-background = white
-
-drawing :: Picture
-drawing = circle 80
-
-main :: IO ()
-main = display window background drawing
+data Map= [Point]						--cria o tipo mapa para poder montar os mapas referentes ao jogo
+ deriving(Show)
