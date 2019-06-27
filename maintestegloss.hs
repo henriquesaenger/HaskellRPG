@@ -4,6 +4,8 @@ import Graphics.Gloss.Interface.Pure.Game
 
 type World = (Float, Float)
 
+pikaimg = (Graphics.Gloss.Game.jpg "imgs/pikaback.jpg")
+
 main::IO()
 main = play
  windowDisplay
@@ -25,7 +27,7 @@ main = play
   initialModel = (0,0)
 
   drawingFunc :: World -> Picture
-  drawingFunc (x, y) = translate x y (Circle 20)
+  drawingFunc (x, y) = translate x y pikaimg
 
   inputHandler :: Event -> World -> World
   inputHandler (EventKey (SpecialKey KeyUp) Down _ _) (x, y) = (x, y + 10)
