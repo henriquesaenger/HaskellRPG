@@ -1,5 +1,5 @@
 
 
-data weapon= weapon{nome::[Char],dano :: int}
+data Weapon= Weapon{nome::[Char],dano :: Int}
 
-data cura= cura{nome::[Char], cura::Int}
+data Cura= Cura{nome::[Char], heal::Int}
