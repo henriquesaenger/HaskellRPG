@@ -1,5 +1,6 @@
 
 import System.Random
+import itens.hs
 
 data Player = Player {position::Point, hp::Int, energy::Int, attack::Int}
  deriving(Show)
