@@ -47,9 +47,13 @@ main = play
 
   drawingFunc :: World -> Picture
   drawingFunc w = pictures 
-   [translate (leftArg (sbp w)) (rightArg (sbp w)) imgsbp,
-   translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas]
+   [translate (leftArg (sbp w)) (rightArg (sbp w)) imgsbp
+   , translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas
+   --, pictures (map Rectangle (map getRekt paredes))
+   ]
 
+--leftArg(leftArg x) rightArg(leftArg x)
+--map translate (map leftArg (map rightArg x)) (map rightArg (map rightArg x))
   inputHandler :: Event -> World -> World
   inputHandler (EventKey (SpecialKey KeyUp) Down _ _) w = w{upButton = True}
   inputHandler (EventKey (SpecialKey KeyDown) Down _ _) w = w{downButton = True}
@@ -72,6 +76,13 @@ main = play
   updateFunc :: Float -> World -> World
   updateFunc _ w = if (colisao (jonas w) (sbp w)) then w{jonas = (1000,1000), sbp = (1000,1000)}
    else (movementCompute w)
+
+getRekt::([a],[a]) -> ((a,a),(a,a))
+getRekt (a, b) = (((primeiro a),(primeiro b)),((primeiro(reverse a)), (primeiro(reverse b))))
+ where
+  primeiro::[a] -> a
+  primeiro (a:x) = a
+
 
 movementCompute::World->World
 movementCompute w = w{jonas = (x',y')}
