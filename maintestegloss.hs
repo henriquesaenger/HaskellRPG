@@ -2,9 +2,14 @@ import qualified Graphics.Gloss.Game
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
 
-data World = Game {
- jonas::(Float,Float),--posicao jonas
- sbp::(Float, Float)--posicao sbp
+data World = Game 
+ { jonas::(Float,Float)--posicao jonas
+ , sbp::(Float, Float)--posicao sbp
+ , upButton::Bool -- botao pressionado
+ , downButton::Bool
+ , rightButton::Bool
+ , leftButton::Bool
+ , paredes::[([Float],[Float])]--paredes da fase
  } deriving Show
 
 imgjonas = (Graphics.Gloss.Game.png "imgs/jonas.png")
@@ -28,7 +33,17 @@ main = play
   simulationRate = 60
 
   initialModel :: World
-  initialModel = Game {jonas = (-490,-280), sbp = (0, 0)}
+  initialModel = Game 
+   {jonas = (-490,-280)
+   , sbp = (0, 0)
+   , upButton = False
+   , downButton = False
+   , rightButton = False
+   , leftButton = False
+   , paredes =
+    [(map fromIntegral [0,1..10],map fromIntegral [-280,-279..(-250)])]
+    ++[(map fromIntegral [-500,-499..(-400)],map fromIntegral [0,1..10])]
+   }
 
   drawingFunc :: World -> Picture
   drawingFunc w = pictures 
@@ -36,20 +51,34 @@ main = play
    translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas]
 
   inputHandler :: Event -> World -> World
-  inputHandler (EventKey (SpecialKey KeyUp) Down _ _) w = moveJonas w 1
-  inputHandler (EventKey (SpecialKey KeyDown) Down _ _) w = moveJonas w 2
-  inputHandler (EventKey (SpecialKey KeyRight) Down _ _) w = moveJonas w 3
-  inputHandler (EventKey (SpecialKey KeyLeft) Down _ _) w = moveJonas w 4
-  inputHandler (EventKey (Char 'w') Down _ _) w = moveJonas w 1
-  inputHandler (EventKey (Char 's') Down _ _) w = moveJonas w 2
-  inputHandler (EventKey (Char 'd') Down _ _) w = moveJonas w 3
-  inputHandler (EventKey (Char 'a') Down _ _) w = moveJonas w 4
+  inputHandler (EventKey (SpecialKey KeyUp) Down _ _) w = w{upButton = True}
+  inputHandler (EventKey (SpecialKey KeyDown) Down _ _) w = w{downButton = True}
+  inputHandler (EventKey (SpecialKey KeyRight) Down _ _) w = w{rightButton = True}
+  inputHandler (EventKey (SpecialKey KeyLeft) Down _ _) w = w{leftButton = True}
+  inputHandler (EventKey (SpecialKey KeyUp) Up _ _) w = w{upButton = False}
+  inputHandler (EventKey (SpecialKey KeyDown) Up _ _) w = w{downButton = False}
+  inputHandler (EventKey (SpecialKey KeyRight) Up _ _) w = w{rightButton = False}
+  inputHandler (EventKey (SpecialKey KeyLeft) Up _ _) w = w{leftButton = False}
+  inputHandler (EventKey (Char 'w') Down _ _) w = w{upButton = True}
+  inputHandler (EventKey (Char 'w') Up _ _) w = w{upButton = False}
+  inputHandler (EventKey (Char 's') Down _ _) w = w{downButton = True}
+  inputHandler (EventKey (Char 's') Up _ _) w = w{downButton = False}
+  inputHandler (EventKey (Char 'd') Down _ _) w = w{rightButton = True}
+  inputHandler (EventKey (Char 'd') Up _ _) w = w{rightButton = False}
+  inputHandler (EventKey (Char 'a') Down _ _) w = w{leftButton = True}
+  inputHandler (EventKey (Char 'a') Up _ _) w = w{leftButton = False}
   inputHandler _ w = w
 
   updateFunc :: Float -> World -> World
   updateFunc _ w = if (colisao (jonas w) (sbp w)) then w{jonas = (1000,1000), sbp = (1000,1000)}
-   else w
+   else (movementCompute w)
 
+movementCompute::World->World
+movementCompute w = w{jonas = (x',y')}
+ where
+  (x,y) = jonas w
+  y' = if (upButton w) then rightArg(colisaoParedes w 1) else if (downButton w) then rightArg(colisaoParedes w 2) else y
+  x' = if (rightButton w) then leftArg(colisaoParedes w 3) else if (leftButton w) then leftArg(colisaoParedes w 4) else x
 
 colisao::(Float,Float)->(Float,Float)->Bool
 colisao (x1,y1) (x2,y2) = 
@@ -57,41 +86,57 @@ colisao (x1,y1) (x2,y2) =
  (x1>=x2 && (x1-10)<=x2 && y1<=y2 && (y1+10)>=y2)||(x1>=x2 && (x1-10)<=x2 && y1>=y2 && (y1-10)<=y2) ---baixo direita, cima direita
  then True else False
 
+colisaoParedes::World -> Int -> (Float, Float)
+colisaoParedes w 1 = (x,y') --up
+ where
+  (x,y) = jonas w
+  p = paredes w
+  y' = if y<(280)&& not (parede (x,y+10) p) then y+1 else y
+colisaoParedes w 2 = (x,y') --down
+ where
+  (x,y) = jonas w
+  p = paredes w
+  y' = if y>(-280)&& not (parede (x,y-10) p) then y-1 else y
+colisaoParedes w 3 = (x',y) --right
+ where
+  (x,y) = jonas w
+  p = paredes w
+  x' = if x<(490)&& not (parede (x+10,y) p) then x+1 else x
+colisaoParedes w 4 = (x',y) --left
+ where
+  (x,y) = jonas w
+  p = paredes w
+  x' = if x>(-490)&& not (parede (x-10,y) p) then x-1 else x
+
 moveJonas::World -> Int -> World
 moveJonas w 1 = w {jonas = (x,y')}
  where
   (x,y) = jonas w
-  y' = if y<(280)&& not (parede (x,y+10)) then (y+10) else y
+  p = paredes w
+  y' = if y<(280)&& not (parede (x,y+10) p) then (y+10) else y
 moveJonas w 2 = w {jonas = (x,y')}
  where
   (x,y) = jonas w
-  y' = if y>(-280)&& not (parede (x,y-10)) then y-10 else y
+  p = paredes w
+  y' = if y>(-280)&& not (parede (x,y-10) p) then y-10 else y
 moveJonas w 3 = w {jonas = (x',y)}
  where
   (x,y) = jonas w
-  x' = if x<(490)&& not (parede (x+10,y)) then x+10 else x
+  p = paredes w
+  x' = if x<(490)&& not (parede (x+10,y) p) then x+10 else x
 moveJonas w 4 = w {jonas = (x',y)}
  where
   (x,y) = jonas w
-  x' = if x>(-490)&& not (parede (x-10,y)) then x-10 else x
+  p = paredes w
+  x' = if x>(-490)&& not (parede (x-10,y) p) then x-10 else x
 
-parede::(Float, Float) -> Bool
-parede (0 ,(-280)) = True
-parede (0 ,(-270)) = True
-parede (0 ,(-260)) = True
-parede (0 ,(-250)) = True
-parede (0 ,(-240)) = True
-parede (0 ,(-230)) = True
-parede (0 ,(-220)) = True
-parede (10 ,(-280)) = True
-parede (10 ,(-270)) = True
-parede (10 ,(-260)) = True
-parede (10 ,(-250)) = True
-parede (10 ,(-240)) = True
-parede (10 ,(-230)) = True
-parede (10 ,(-220)) = True
-parede (_,_) = False
+parede::(Float, Float) -> [([Float],[Float])] -> Bool
+parede (x,y) [] = False
+parede (x,y) ((a,b):l) = if (pertence x a) && (pertence y b) then True else parede (x,y) (l)
 
+pertence::Eq a => a -> [a] -> Bool
+pertence item [] = False
+pertence item (elem:lista) = if item == elem then True else pertence item lista
 
 leftArg::(a,a)->a
 leftArg (x,y) = x
