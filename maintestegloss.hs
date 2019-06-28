@@ -4,7 +4,7 @@ import Graphics.Gloss.Interface.Pure.Game
 
 type World = (Float, Float)
 
-pikaimg = (Graphics.Gloss.Game.jpg "imgs/pikaback.jpg")
+pikaimg = (Graphics.Gloss.Game.png "imgs/jonas.png")
 
 main::IO()
 main = play
@@ -21,7 +21,7 @@ main = play
   windowDisplay = InWindow "Window" (1024, 600) (10, 10)
 
   simulationRate :: Int
-  simulationRate = 20
+  simulationRate = 60
 
   initialModel :: World
   initialModel = (0,0)
@@ -37,11 +37,4 @@ main = play
   inputHandler _ w = w
 
   updateFunc :: Float -> World -> World
-  updateFunc _ (x, y) = (towardCenter x, towardCenter y)
-   where
-    towardCenter :: Float -> Float
-    towardCenter c = if abs c < 0.25
-     then 0
-     else if c > 0
-      then c - 0.25
-      else c + 0.25
+  updateFunc _ (x, y) = (x, y)
