@@ -2,10 +2,10 @@ import qualified Graphics.Gloss.Game
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
 
-type World = (
- (Float,Float),--posicao jonas
- (Float, Float)--posicao sbp
- )
+data World = Game {
+ jonas::(Float,Float),--posicao jonas
+ sbp::(Float, Float)--posicao sbp
+ } deriving Show
 
 imgjonas = (Graphics.Gloss.Game.png "imgs/jonas.png")
 imgsbp = (Graphics.Gloss.Game.png "imgs/sbpt.png")
@@ -28,12 +28,12 @@ main = play
   simulationRate = 60
 
   initialModel :: World
-  initialModel = ((-490,-280), (0, 0))
+  initialModel = Game {jonas = (-490,-280), sbp = (0, 0)}
 
   drawingFunc :: World -> Picture
-  drawingFunc ((xjonas, yjonas), (xsbp, ysbp)) = pictures 
-   [translate xsbp ysbp imgsbp,
-   translate xjonas yjonas imgjonas]
+  drawingFunc w = pictures 
+   [translate (leftArg (sbp w)) (rightArg (sbp w)) imgsbp,
+   translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas]
 
   inputHandler :: Event -> World -> World
   inputHandler (EventKey (SpecialKey KeyUp) Down _ _) w = moveJonas w 1
@@ -47,8 +47,8 @@ main = play
   inputHandler _ w = w
 
   updateFunc :: Float -> World -> World
-  updateFunc _ (jonas, (xsbp,ysbp)) = if (colisao jonas (xsbp, ysbp)) then ((1000,1000), (1000, 1000))
-   else (jonas,(xsbp,ysbp))
+  updateFunc _ w = if (colisao (jonas w) (sbp w)) then w{jonas = (1000,1000), sbp = (1000,1000)}
+   else w
 
 
 colisao::(Float,Float)->(Float,Float)->Bool
@@ -58,10 +58,22 @@ colisao (x1,y1) (x2,y2) =
  then True else False
 
 moveJonas::World -> Int -> World
-moveJonas ((x,y), r) 1 = if y<(280)&& not (parede (x,y+10)) then ((x, y + 10),r) else ((x,y),r)
-moveJonas ((x,y), r) 2 = if y>(-280)&& not (parede (x,y-10)) then ((x, y - 10),r) else ((x,y),r)
-moveJonas ((x,y), r) 3 = if x<(490)&& not (parede (x+10,y)) then ((x+10, y),r) else ((x,y),r)
-moveJonas ((x,y), r) 4 = if x>(-490)&& not (parede (x-10,y)) then ((x-10, y),r) else ((x,y),r)
+moveJonas w 1 = w {jonas = (x,y')}
+ where
+  (x,y) = jonas w
+  y' = if y<(280)&& not (parede (x,y+10)) then (y+10) else y
+moveJonas w 2 = w {jonas = (x,y')}
+ where
+  (x,y) = jonas w
+  y' = if y>(-280)&& not (parede (x,y-10)) then y-10 else y
+moveJonas w 3 = w {jonas = (x',y)}
+ where
+  (x,y) = jonas w
+  x' = if x<(490)&& not (parede (x+10,y)) then x+10 else x
+moveJonas w 4 = w {jonas = (x',y)}
+ where
+  (x,y) = jonas w
+  x' = if x>(-490)&& not (parede (x-10,y)) then x-10 else x
 
 parede::(Float, Float) -> Bool
 parede (0 ,(-280)) = True
@@ -79,3 +91,10 @@ parede (10 ,(-240)) = True
 parede (10 ,(-230)) = True
 parede (10 ,(-220)) = True
 parede (_,_) = False
+
+
+leftArg::(a,a)->a
+leftArg (x,y) = x
+
+rightArg::(a,a)->a
+rightArg (x,y) = y
