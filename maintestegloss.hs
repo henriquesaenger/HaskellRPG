@@ -41,8 +41,9 @@ main = play
    , rightButton = False
    , leftButton = False
    , paredes =
-    [(map fromIntegral [0,1..10],map fromIntegral [-280,-279..(-250)])]
-    ++[(map fromIntegral [-500,-499..(-400)],map fromIntegral [0,1..10])]
+    [(map fromIntegral [0,1..10],map fromIntegral [-280,-279..(-250)])
+    ,(map fromIntegral [-500,-499..(-400)],map fromIntegral [0,1..10])
+    ]
    }
 
   drawingFunc :: World -> Picture
@@ -54,6 +55,27 @@ main = play
 
 --leftArg(leftArg x) rightArg(leftArg x)
 --map translate (map leftArg (map rightArg x)) (map rightArg (map rightArg x))
+  
+--  map myTranslate (zipao 
+  --(map leftArg (map leftArg (map getRekt paredes)))--x vetor
+  --(map rightArg (map leftArg (map getRekt paredes)))--y vetor
+  --()--map dos retangulos
+  --)
+
+  let (x,y,ox,oy) = 
+   ((map leftArg (map rightArg (map getRekt paredes)))
+   , (map rightArg (map rightArg (map getRekt paredes)))
+   , (map leftArg (map leftArg (map getRekt paredes)))
+   , (map rightArg (map leftArg (map getRekt paredes)))
+   ) in map myTranslate (zipao (ox + (x/2)) (oy + (y/2)) (map myRecSolid (zip2 x y))--falta funcao pro ox+(x/2) por eles serem vets
+
+   myRecSolid::(Float,Float) -> Picture
+   myRecSolid (x,y) = rectangleSolid x y
+
+   zip2::[a] -> [a] -> [(a,a)]
+   zip2 [] [] = []
+   zip2 (x:a) (y:b) = (x,y):(zip2 a b)
+
   inputHandler :: Event -> World -> World
   inputHandler (EventKey (SpecialKey KeyUp) Down _ _) w = w{upButton = True}
   inputHandler (EventKey (SpecialKey KeyDown) Down _ _) w = w{downButton = True}
@@ -83,6 +105,15 @@ getRekt (a, b) = (((primeiro a),(primeiro b)),((primeiro(reverse a)), (primeiro(
   primeiro::[a] -> a
   primeiro (a:x) = a
 
+
+myTranslate::(Float, Float, Picture) -> Picture
+myTranslate (a,b,c) = translate a b c
+
+zipao::[Float] -> [Float] -> [Picture] -> [(Float, Float, Picture)]
+zipao [] _ _ = []
+zipao _ [] _ = []
+zipao _ _ [] = []
+zipao (x:a) (y:b) (z:c) = (x,y,z):(zipao a b c)
 
 movementCompute::World->World
 movementCompute w = w{jonas = (x',y')}
