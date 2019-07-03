@@ -5,15 +5,20 @@ import Graphics.Gloss.Interface.Pure.Game
 data World = Game 
  { jonas::(Float,Float)--posicao jonas
  , sbp::(Float, Float)--posicao sbp
+ , matamoscas::(Float, Float)
+ , matamoscasstate::(Float)--para alternar imagem o mata moscas
  , upButton::Bool -- botao pressionado
  , downButton::Bool
  , rightButton::Bool
  , leftButton::Bool
  , paredes::[([Float],[Float])]--paredes da fase
+ , frame::Float
  } deriving Show
 
 imgjonas = (Graphics.Gloss.Game.png "imgs/jonas.png")
 imgsbp = (Graphics.Gloss.Game.png "imgs/sbpt.png")
+imgmmoscas1 = (Graphics.Gloss.Game.png "imgs/matamoscas1t.png")
+imgmmoscas2 = (Graphics.Gloss.Game.png "imgs/matamoscas2t.png")
 
 main::IO()
 main = play
@@ -37,20 +42,31 @@ main = play
    {jonas = (-490,-280)
    , sbp = (0, 0)
    , upButton = False
+   , matamoscas = (100,100)
+   , matamoscasstate = 0
    , downButton = False
    , rightButton = False
    , leftButton = False
-   , paredes =
-    [(map fromIntegral [0,1..10],map fromIntegral [-280,-279..(-250)])
-    ,(map fromIntegral [-500,-499..(-400)],map fromIntegral [0,1..10])
+   , paredes = --quando chegar no 0, sempre iniciar uma nova parede
+    [(map fromIntegral [0,1..40],map fromIntegral [-250,-251..(-280)])
+    ,(map fromIntegral [-400,-401..(-500)],map fromIntegral [0,1..40])
+    ,(map fromIntegral [0,1..50],map fromIntegral [0,1..50])
+    ,(map fromIntegral [0,-1..(-50)],map fromIntegral [0,-1..(-50)])
     ]
+   , frame = 0
    }
 
   drawingFunc :: World -> Picture
   drawingFunc w = pictures 
    [translate (leftArg (sbp w)) (rightArg (sbp w)) imgsbp
    , translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas
-   --, pictures (map Rectangle (map getRekt paredes))
+   , translate ((leftArg (matamoscas w))+1000.0*(matamoscasstate w)) ((rightArg(matamoscas w))+1000.0*(matamoscasstate w)) imgmmoscas1
+   , translate ((leftArg (matamoscas w))+1000.0-(1000.0*(matamoscasstate w))) ((rightArg(matamoscas w))+1000.0-(1000.0*(matamoscasstate w))) imgmmoscas2
+   , pictures (let (x,y,ox,oy) = ((map leftArg (map rightArg (map getRekt (paredes w))))
+   	                              , (map rightArg (map rightArg (map getRekt (paredes w))))
+   	                              , (map leftArg (map leftArg (map getRekt (paredes w))))
+   	                              , (map rightArg (map leftArg (map getRekt (paredes w))))) 
+                in map myTranslate (zipao (map calculoZipao (zip2 ox x)) (map calculoZipao (zip2 oy y)) (map myRecSolid (zip2 x y))))
    ]
 
 --leftArg(leftArg x) rightArg(leftArg x)
@@ -62,19 +78,7 @@ main = play
   --()--map dos retangulos
   --)
 
-  let (x,y,ox,oy) = 
-   ((map leftArg (map rightArg (map getRekt paredes)))
-   , (map rightArg (map rightArg (map getRekt paredes)))
-   , (map leftArg (map leftArg (map getRekt paredes)))
-   , (map rightArg (map leftArg (map getRekt paredes)))
-   ) in map myTranslate (zipao (ox + (x/2)) (oy + (y/2)) (map myRecSolid (zip2 x y))--falta funcao pro ox+(x/2) por eles serem vets
-
-   myRecSolid::(Float,Float) -> Picture
-   myRecSolid (x,y) = rectangleSolid x y
-
-   zip2::[a] -> [a] -> [(a,a)]
-   zip2 [] [] = []
-   zip2 (x:a) (y:b) = (x,y):(zip2 a b)
+  
 
   inputHandler :: Event -> World -> World
   inputHandler (EventKey (SpecialKey KeyUp) Down _ _) w = w{upButton = True}
@@ -96,8 +100,8 @@ main = play
   inputHandler _ w = w
 
   updateFunc :: Float -> World -> World
-  updateFunc _ w = if (colisao (jonas w) (sbp w)) then w{jonas = (1000,1000), sbp = (1000,1000)}
-   else (movementCompute w)
+  updateFunc _ w = if (colisao (jonas w) (sbp w))||(colisao (jonas w) (matamoscas w)) then w{jonas = (1000,1000), sbp = (1000,1000)}
+   else (changeMMState.movementCompute.getWorldFrame) w
 
 getRekt::([a],[a]) -> ((a,a),(a,a))
 getRekt (a, b) = (((primeiro a),(primeiro b)),((primeiro(reverse a)), (primeiro(reverse b))))
@@ -105,6 +109,15 @@ getRekt (a, b) = (((primeiro a),(primeiro b)),((primeiro(reverse a)), (primeiro(
   primeiro::[a] -> a
   primeiro (a:x) = a
 
+myRecSolid::(Float,Float) -> Picture
+myRecSolid (x,y) = rectangleSolid x y
+
+zip2::[a] -> [a] -> [(a,a)]
+zip2 [] [] = []
+zip2 (x:a) (y:b) = (x,y):(zip2 a b)
+
+calculoZipao::(Float, Float) -> Float
+calculoZipao (ox,x) = ox+(x/2)
 
 myTranslate::(Float, Float, Picture) -> Picture
 myTranslate (a,b,c) = translate a b c
@@ -121,6 +134,15 @@ movementCompute w = w{jonas = (x',y')}
   (x,y) = jonas w
   y' = if (upButton w) then rightArg(colisaoParedes w 1) else if (downButton w) then rightArg(colisaoParedes w 2) else y
   x' = if (rightButton w) then leftArg(colisaoParedes w 3) else if (leftButton w) then leftArg(colisaoParedes w 4) else x
+
+getWorldFrame::World -> World
+getWorldFrame w = w{frame = ((frame w)+1)}
+
+changeMMState::World -> World
+changeMMState w = if ((modFloat (frame w) 120)>60) then w{matamoscasstate = 1} else w{matamoscasstate = 0}
+
+modFloat::Float -> Float -> Float
+modFloat a b = fromIntegral((round a) `mod` (round b))
 
 colisao::(Float,Float)->(Float,Float)->Bool
 colisao (x1,y1) (x2,y2) = 
