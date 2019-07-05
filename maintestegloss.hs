@@ -14,6 +14,9 @@ data World = Game
  , djonas::(Float, Float)--jonas morto
  , dijonas::(Float, Float)--jonas morto por inseticida
  , spraystate::(Float)
+ , senhapos::(Float, Float)
+ , senha::Bool
+ , velocidade::Float
  , upButton::Bool -- botao pressionado
  , downButton::Bool
  , rightButton::Bool
@@ -34,6 +37,7 @@ imgdjonas = (Graphics.Gloss.Game.png "imgs/deadjonast.png")
 imgdijonas = (Graphics.Gloss.Game.png "imgs/deadjonasinseticidat.png")
 imginsetatk = (Graphics.Gloss.Game.png "imgs/matamoscas2t.png")
 imgspray = (Graphics.Gloss.Game.png "imgs/esporradat.png")
+imgsenha = (Graphics.Gloss.Game.png "imgs/senhat.png")
 
 main::IO()
 main = play
@@ -56,7 +60,6 @@ main = play
   initialModel = Game 
    {jonas = (-490,-280)
    , sbp = (-100, 100)
-   , upButton = False
    , matamoscas = (100,100)
    , matamoscasstate = 0
    , raid = (-80, 200)
@@ -66,6 +69,10 @@ main = play
    , djonas = (1000, 1000)
    , dijonas = (1000,1000)
    , spraystate = 0
+   , senhapos = (-470, 50)
+   , senha = False
+   , velocidade = 1
+   , upButton = False
    , downButton = False
    , rightButton = False
    , leftButton = False
@@ -90,10 +97,11 @@ main = play
    , translate ((leftArg (matamoscas w))+1000.0*(matamoscasstate w)) ((rightArg(matamoscas w))+1000.0*(matamoscasstate w)) imgmmoscas1
    , translate ((leftArg (matamoscas w))+1000.0-(1000.0*(matamoscasstate w))) ((rightArg(matamoscas w))+1000.0-(1000.0*(matamoscasstate w))) imgmmoscas2
    , translate (leftArg (aranha w)) (rightArg (aranha w)) imgaranha
+   , translate (leftArg (senhapos w)) (rightArg (senhapos w)) imgsenha
    , translate (leftArg (bomba w)) (rightArg (bomba w)) imgbomba
    , translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas
-   , translate ((leftArg (sbp w))-25+1000*(spraystate w)) ((rightArg (sbp w))+10+1000*(spraystate w)) imgspray
-   , translate ((leftArg (raid w))-25+1000*(spraystate w)) ((rightArg (raid w))+10+1000*(spraystate w)) imgspray
+   , translate ((leftArg (sbp w))-25+1000*(spraystate w)) ((rightArg (sbp w))+20+1000*(spraystate w)) imgspray
+   , translate ((leftArg (raid w))-25+1000*(spraystate w)) ((rightArg (raid w))+20+1000*(spraystate w)) imgspray
    , translate (leftArg (wjonas w)) (rightArg (wjonas w)) imgwjonas
    , translate (leftArg (djonas w)) (rightArg (djonas w)) imgdjonas
    , translate (leftArg (dijonas w)) (rightArg (dijonas w)) imgdijonas
@@ -122,7 +130,8 @@ main = play
   updateFunc :: Float -> World -> World
   updateFunc _ w = if (colisao (jonas w) (aranha w))||(colisao (jonas w) (matamoscas w))||(colisao (jonas w) (raid w))||(colisao (jonas w) (sbp w)) then w{jonas = (1000,1000), sbp = (1000,1000), djonas = (0,0)}
    else if ((colisaoi (jonas w) (sbp w))&&((spraystate w)==0))||((colisaoi (jonas w) (raid w))&&((spraystate w)==0)) then w{jonas = (1000,1000), sbp = (1040, 1000), dijonas = (0,0)}
-   else if (colisao (jonas w) (bomba w)) then w{jonas = (1000,1000), bomba = (1000,1000), wjonas = (0,0)}
+   else if (colisao (jonas w) (bomba w))&&(senha w) then w{jonas = (1000,1000), bomba = (1000,1000), wjonas = (0,0)}
+   else if (colisao (jonas w) (senhapos w)) then (changeSprayState.changeMMState.movementCompute.getWorldFrame) w{senhapos = (1000,1000), senha = True}
    else (changeSprayState.changeMMState.movementCompute.getWorldFrame) w
 
 getRekt::([a],[a]) -> ((a,a),(a,a))
@@ -177,8 +186,8 @@ colisao (x1,y1) (x2,y2) =
 
 colisaoi::(Float,Float)->(Float,Float)->Bool
 colisaoi (x1,y1) (x2,y2) = 
- if (x1<=(x2-40) && (x1+10)>=(x2-40) && y1<=(y2+10) && (y1+10)>=(y2+10))||(x1<=(x2-40) && (x1+10)>=(x2-40) && y1>=(y2+10) && (y1-10)<=(y2+10))|| ---baixo esquerda, cima esquerda
- (x1>=(x2-40) && (x1-10)<=(x2-10) && y1<=(y2+10) && (y1+10)>=(y2+10))||(x1>=(x2-40) && (x1-10)<=(x2-10) && y1>=(y2+10) && (y1-10)<=(y2+10)) ---baixo direita, cima direita
+ if (x1<=(x2-40) && (x1+10)>=(x2-40) && y1<=(y2+20) && (y1+10)>=(y2+20))||(x1<=(x2-40) && (x1+10)>=(x2-40) && y1>=(y2+20) && (y1-10)<=(y2+20))|| ---baixo esquerda, cima esquerda
+ (x1>=(x2-40) && (x1-10)<=(x2-10) && y1<=(y2+20) && (y1+10)>=(y2+20))||(x1>=(x2-40) && (x1-10)<=(x2-10) && y1>=(y2+20) && (y1-10)<=(y2+20)) ---baixo direita, cima direita
  then True else False
 
 colisaoParedes::World -> Int -> (Float, Float)
@@ -186,22 +195,22 @@ colisaoParedes w 1 = (x,y') --up
  where
   (x,y) = jonas w
   p = paredes w
-  y' = if y<(280)&& not (parede (x,y+10) p) then y+1 else y
+  y' = if y<(280)&& not (parede (x,y+(10+(velocidade w))) p) then y+(velocidade w) else y
 colisaoParedes w 2 = (x,y') --down
  where
   (x,y) = jonas w
   p = paredes w
-  y' = if y>(-280)&& not (parede (x,y-10) p) then y-1 else y
+  y' = if y>(-280)&& not (parede (x,y-(10+(velocidade w))) p) then y-(velocidade w) else y
 colisaoParedes w 3 = (x',y) --right
  where
   (x,y) = jonas w
   p = paredes w
-  x' = if x<(490)&& not (parede (x+10,y) p) then x+1 else x
+  x' = if x<(490)&& not (parede (x+(10+(velocidade w)),y) p) then x+(velocidade w) else x
 colisaoParedes w 4 = (x',y) --left
  where
   (x,y) = jonas w
   p = paredes w
-  x' = if x>(-490)&& not (parede (x-10,y) p) then x-1 else x
+  x' = if x>(-490)&& not (parede (x-(10+(velocidade w)),y) p) then x-(velocidade w) else x
 
 moveJonas::World -> Int -> World
 moveJonas w 1 = w {jonas = (x,y')}
