@@ -5,15 +5,20 @@ import Graphics.Gloss.Interface.Pure.Game
 data World = Game 
  { jonas::(Float,Float)--posicao jonas
  , sbp::(Float, Float)--posicao sbp
+ , upsbp::Bool--direcao sbp
  , matamoscas::(Float, Float)
+ , esqmm::Bool--direcao do matamoscas
  , matamoscasstate::(Float)--para alternar imagem o mata moscas
  , raid::(Float, Float)--
+ , upraid::Bool--direcao raid
  , aranha::(Float, Float)--
  , bomba::(Float, Float)--bomba atomica para salvar o mundo
  , wjonas::(Float, Float)--jonas vitorioso
  , djonas::(Float, Float)--jonas morto
  , dijonas::(Float, Float)--jonas morto por inseticida
  , spraystate::(Float)
+ , comida1::(Float, Float)
+ , comida2::(Float, Float)
  , senhapos::(Float, Float)
  , senha::Bool
  , velocidade::Float
@@ -63,17 +68,22 @@ main = play
   initialModel :: World
   initialModel = Game 
    {jonas = (-490,-280)
-   , sbp = (-100, 100)
-   , matamoscas = (100,100)
+   , sbp = (30, -275)
+   , upsbp = True
+   , upraid = True
+   , esqmm = True
+   , matamoscas = (470,150)
    , matamoscasstate = 0
-   , raid = (-80, 200)
-   , aranha = (-60, -200)
-   , bomba = (480, 250)
+   , raid = (480, -275)
+   , aranha = (-350, 155)
+   , bomba = (-480, 280)
    , wjonas = (1000, 1000)
    , djonas = (1000, 1000)
    , dijonas = (1000,1000)
    , spraystate = 0
-   , senhapos = (-470, 50)
+   , comida1 = (255,-285)
+   , comida2 = (470,280)
+   , senhapos = (305,-280)
    , senha = False
    , velocidade = 1
    , gameover = 1
@@ -105,6 +115,8 @@ main = play
    , translate ((leftArg (matamoscas w))+1000.0*(matamoscasstate w)) ((rightArg(matamoscas w))+1000.0*(matamoscasstate w)) imgmmoscas1
    , translate ((leftArg (matamoscas w))+1000.0-(1000.0*(matamoscasstate w))) ((rightArg(matamoscas w))+1000.0-(1000.0*(matamoscasstate w))) imgmmoscas2
    , translate (leftArg (aranha w)) (rightArg (aranha w)) imgaranha
+   , translate (leftArg (comida1 w)) (rightArg (comida1 w)) imgjonas
+   , translate (leftArg (comida2 w)) (rightArg (comida2 w)) imgjonas
    , translate (leftArg (senhapos w)) (rightArg (senhapos w)) imgsenha
    , translate (leftArg (bomba w)) (rightArg (bomba w)) imgbomba
    , translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas
@@ -141,9 +153,11 @@ main = play
   updateFunc _ w = if (colisao (jonas w) (aranha w))||(colisao (jonas w) (matamoscas w))||(colisao (jonas w) (raid w))||(colisao (jonas w) (sbp w)) then w{jonas = (1000,1000), sbp = (1000,1000), djonas = (0,0), gameover = 0}
    else if ((colisaoi (jonas w) (sbp w))&&((spraystate w)==0))||((colisaoi (jonas w) (raid w))&&((spraystate w)==0)) then w{jonas = (1000,1000), sbp = (1040, 1000), dijonas = (0,0), gameover = 0}
    else if (colisao (jonas w) (bomba w))&&(senha w) then w{jonas = (1000,1000), bomba = (1000,1000), wjonas = (0,-150), victory = 0}
-   else if (colisao (jonas w) (senhapos w)) then (changeSprayState.changeMMState.movementCompute.getWorldFrame) w{senhapos = (1000,1000), senha = True}
-   else if (areapers(jonas w) (aranha w) 200) then (changeSprayState.changeMMState.movementCompute.getWorldFrame) w{aranha = (perseguicao (aranha w) (jonas w) 0.75)}
-   else (changeSprayState.changeMMState.movementCompute.getWorldFrame) w
+   else if (colisao (jonas w) (comida1 w)) then (iaraid.iasbp.iammoscas.changeSprayState.changeMMState.movementCompute.getWorldFrame) w{comida1 = (1000,1000), velocidade = (velocidade w)+1}
+   else if (colisao (jonas w) (comida2 w)) then (iaraid.iasbp.iammoscas.changeSprayState.changeMMState.movementCompute.getWorldFrame) w{comida2 = (1000,1000), velocidade = (velocidade w)+1}
+   else if (colisao (jonas w) (senhapos w)) then (iaraid.iasbp.iammoscas.changeSprayState.changeMMState.movementCompute.getWorldFrame) w{senhapos = (1000,1000), senha = True}
+   else if (areapers(jonas w) (aranha w) 140) then (iaraid.iasbp.iammoscas.changeSprayState.changeMMState.movementCompute.getWorldFrame) w{aranha = (perseguicao (aranha w) (jonas w) 1.99)}
+   else (iaraid.iasbp.iammoscas.changeSprayState.changeMMState.movementCompute.getWorldFrame) w
 
 getRekt::([a],[a]) -> ((a,a),(a,a))
 getRekt (a, b) = (((primeiro a),(primeiro b)),((primeiro(reverse a)), (primeiro(reverse b))))
@@ -182,6 +196,27 @@ movementCompute w = w{jonas = (x',y')}
 
 getWorldFrame::World -> World
 getWorldFrame w = w{frame = ((frame w)+1)}
+
+iammoscas::World -> World
+iammoscas w = w{matamoscas = (x',y), esqmm = esq}
+ where
+  (x,y) = matamoscas w
+  x' = if (esqmm w) then x-2 else x+2
+  esq = if x<(-150) then False else if x>470 then True else (esqmm w)
+
+iasbp::World -> World
+iasbp w = w{sbp = (x,y'), upsbp = up}
+ where
+  (x,y) = sbp w
+  y' = if (upsbp w) then y+1.5 else y-1.5
+  up = if y>(-120) then False else if y<(-275) then True else (upsbp w)
+
+iaraid::World -> World
+iaraid w = w{raid = (x,y'), upraid = up}
+ where
+  (x,y) = raid w
+  y' = if (upraid w) then y+1.75 else y-1.75
+  up = if y>(-120) then False else if y<(-275) then True else (upraid w)
 
 perseguicao::(Float, Float)->(Float, Float)->Float->(Float, Float)
 perseguicao (x,y) (a,b) speed = (x',y')
