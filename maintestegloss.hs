@@ -47,6 +47,7 @@ imgspray = (Graphics.Gloss.Game.png "imgs/esporradat.png")
 imgsenha = (Graphics.Gloss.Game.png "imgs/senhat.png")
 imggameover = (Graphics.Gloss.Game.png "imgs/gameover.png")
 imgvictory = (Graphics.Gloss.Game.png "imgs/victory.png")
+imgcenario = (Graphics.Gloss.Game.png "imgs/cenario.png")
 
 main::IO()
 main = play
@@ -105,7 +106,8 @@ main = play
 
   drawingFunc :: World -> Picture
   drawingFunc w = pictures 
-   [pictures (let (x,y,ox,oy) = ((map leftArg (map rightArg (map getRekt (paredes w))))
+   [translate 0 0 imgcenario
+   , pictures (let (x,y,ox,oy) = ((map leftArg (map rightArg (map getRekt (paredes w))))
    	                              , (map rightArg (map rightArg (map getRekt (paredes w))))
    	                              , (map leftArg (map leftArg (map getRekt (paredes w))))
    	                              , (map rightArg (map leftArg (map getRekt (paredes w))))) 
