@@ -48,6 +48,7 @@ imgsenha = (Graphics.Gloss.Game.png "imgs/senhat.png")
 imggameover = (Graphics.Gloss.Game.png "imgs/gameover.png")
 imgvictory = (Graphics.Gloss.Game.png "imgs/victory.png")
 imgcenario = (Graphics.Gloss.Game.png "imgs/cenario.png")
+imgchoco = (Graphics.Gloss.Game.png "imgs/chocot.png")
 
 main::IO()
 main = play
@@ -117,8 +118,8 @@ main = play
    , translate ((leftArg (matamoscas w))+1000.0*(matamoscasstate w)) ((rightArg(matamoscas w))+1000.0*(matamoscasstate w)) imgmmoscas1
    , translate ((leftArg (matamoscas w))+1000.0-(1000.0*(matamoscasstate w))) ((rightArg(matamoscas w))+1000.0-(1000.0*(matamoscasstate w))) imgmmoscas2
    , translate (leftArg (aranha w)) (rightArg (aranha w)) imgaranha
-   , translate (leftArg (comida1 w)) (rightArg (comida1 w)) imgjonas
-   , translate (leftArg (comida2 w)) (rightArg (comida2 w)) imgjonas
+   , translate (leftArg (comida1 w)) (rightArg (comida1 w)) imgchoco
+   , translate (leftArg (comida2 w)) (rightArg (comida2 w)) imgchoco
    , translate (leftArg (senhapos w)) (rightArg (senhapos w)) imgsenha
    , translate (leftArg (bomba w)) (rightArg (bomba w)) imgbomba
    , translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas
