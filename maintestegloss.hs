@@ -17,6 +17,8 @@ data World = Game
  , senhapos::(Float, Float)
  , senha::Bool
  , velocidade::Float
+ , gameover::Float
+ , victory::Float
  , upButton::Bool -- botao pressionado
  , downButton::Bool
  , rightButton::Bool
@@ -38,6 +40,8 @@ imgdijonas = (Graphics.Gloss.Game.png "imgs/deadjonasinseticidat.png")
 imginsetatk = (Graphics.Gloss.Game.png "imgs/matamoscas2t.png")
 imgspray = (Graphics.Gloss.Game.png "imgs/esporradat.png")
 imgsenha = (Graphics.Gloss.Game.png "imgs/senhat.png")
+imggameover = (Graphics.Gloss.Game.png "imgs/gameover.png")
+imgvictory = (Graphics.Gloss.Game.png "imgs/victory.png")
 
 main::IO()
 main = play
@@ -72,15 +76,19 @@ main = play
    , senhapos = (-470, 50)
    , senha = False
    , velocidade = 1
+   , gameover = 1
+   , victory = 1
    , upButton = False
    , downButton = False
    , rightButton = False
    , leftButton = False
    , paredes = --quando chegar no 0, sempre iniciar uma nova parede
-    [(map fromIntegral [0,1..40],map fromIntegral [-250,-251..(-280)])
-    ,(map fromIntegral [-400,-401..(-500)],map fromIntegral [0,1..40])
-    ,(map fromIntegral [0,1..50],map fromIntegral [0,1..50])
-    ,(map fromIntegral [0,-1..(-50)],map fromIntegral [0,-1..(-50)])
+    [(map fromIntegral [-512,-511..(290)],map fromIntegral [0,1..(25)])--parede central
+    ,(map fromIntegral [365,366..(512)],map fromIntegral [0,1..(25)])--resto parede central
+    ,(map fromIntegral [-175,-176..(-200)],map fromIntegral [100,101..(300)])--parede sala bomba
+    ,(map fromIntegral [-337,-336..(437)],map fromIntegral [-75,-76..(-100)])--parede cozinha para corredor
+    ,(map fromIntegral [265,266..(290)],map fromIntegral [-75,-76..(-300)])--parede sala senha
+    ,(map fromIntegral [-437,-436..(-412)],map fromIntegral [-75,-76..(-300)])--parede cozinha - barata
     ]
    , frame = 0
    }
@@ -91,7 +99,7 @@ main = play
    	                              , (map rightArg (map rightArg (map getRekt (paredes w))))
    	                              , (map leftArg (map leftArg (map getRekt (paredes w))))
    	                              , (map rightArg (map leftArg (map getRekt (paredes w))))) 
-                in map myTranslate (zipao (map calculoZipao (zip2 ox x)) (map calculoZipao (zip2 oy y)) (map myRecSolid (zip2 x y))))
+                in map myTranslate (zipao (map calculoZipao (zip2 ox x)) (map calculoZipao (zip2 oy y)) (map myRecSolid (zip2 (map menos (zip2 x ox)) (map menos (zip2 y oy))))))
    , translate (leftArg (sbp w)) (rightArg (sbp w)) imgsbp
    , translate (leftArg (raid w)) (rightArg (raid w)) imgraid
    , translate ((leftArg (matamoscas w))+1000.0*(matamoscasstate w)) ((rightArg(matamoscas w))+1000.0*(matamoscasstate w)) imgmmoscas1
@@ -102,6 +110,8 @@ main = play
    , translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas
    , translate ((leftArg (sbp w))-25+1000*(spraystate w)) ((rightArg (sbp w))+20+1000*(spraystate w)) imgspray
    , translate ((leftArg (raid w))-25+1000*(spraystate w)) ((rightArg (raid w))+20+1000*(spraystate w)) imgspray
+   , translate (10000*(gameover w)) (10000*(gameover w)) imggameover
+   , translate (10000*(victory w)) (10000*(victory w)) imgvictory
    , translate (leftArg (wjonas w)) (rightArg (wjonas w)) imgwjonas
    , translate (leftArg (djonas w)) (rightArg (djonas w)) imgdjonas
    , translate (leftArg (dijonas w)) (rightArg (dijonas w)) imgdijonas
@@ -128,11 +138,11 @@ main = play
   inputHandler _ w = w
 
   updateFunc :: Float -> World -> World
-  updateFunc _ w = if (colisao (jonas w) (aranha w))||(colisao (jonas w) (matamoscas w))||(colisao (jonas w) (raid w))||(colisao (jonas w) (sbp w)) then w{jonas = (1000,1000), sbp = (1000,1000), djonas = (0,0)}
-   else if ((colisaoi (jonas w) (sbp w))&&((spraystate w)==0))||((colisaoi (jonas w) (raid w))&&((spraystate w)==0)) then w{jonas = (1000,1000), sbp = (1040, 1000), dijonas = (0,0)}
-   else if (colisao (jonas w) (bomba w))&&(senha w) then w{jonas = (1000,1000), bomba = (1000,1000), wjonas = (0,0)}
+  updateFunc _ w = if (colisao (jonas w) (aranha w))||(colisao (jonas w) (matamoscas w))||(colisao (jonas w) (raid w))||(colisao (jonas w) (sbp w)) then w{jonas = (1000,1000), sbp = (1000,1000), djonas = (0,0), gameover = 0}
+   else if ((colisaoi (jonas w) (sbp w))&&((spraystate w)==0))||((colisaoi (jonas w) (raid w))&&((spraystate w)==0)) then w{jonas = (1000,1000), sbp = (1040, 1000), dijonas = (0,0), gameover = 0}
+   else if (colisao (jonas w) (bomba w))&&(senha w) then w{jonas = (1000,1000), bomba = (1000,1000), wjonas = (0,-150), victory = 0}
    else if (colisao (jonas w) (senhapos w)) then (changeSprayState.changeMMState.movementCompute.getWorldFrame) w{senhapos = (1000,1000), senha = True}
-   else if (areapers(jonas w) (aranha w) 200) then (changeSprayState.changeMMState.movementCompute.getWorldFrame) w{aranha = (perseguicao (aranha w) (jonas w) 0.5)}
+   else if (areapers(jonas w) (aranha w) 200) then (changeSprayState.changeMMState.movementCompute.getWorldFrame) w{aranha = (perseguicao (aranha w) (jonas w) 0.75)}
    else (changeSprayState.changeMMState.movementCompute.getWorldFrame) w
 
 getRekt::([a],[a]) -> ((a,a),(a,a))
@@ -148,8 +158,11 @@ zip2::[a] -> [a] -> [(a,a)]
 zip2 [] [] = []
 zip2 (x:a) (y:b) = (x,y):(zip2 a b)
 
+menos::(Float, Float) -> Float
+menos (a, b) = a-b
+
 calculoZipao::(Float, Float) -> Float
-calculoZipao (ox,x) = ox+(x/2)
+calculoZipao (ox,x) = ox+((x-ox)/2)
 
 myTranslate::(Float, Float, Picture) -> Picture
 myTranslate (a,b,c) = translate a b c
