@@ -132,6 +132,7 @@ main = play
    else if ((colisaoi (jonas w) (sbp w))&&((spraystate w)==0))||((colisaoi (jonas w) (raid w))&&((spraystate w)==0)) then w{jonas = (1000,1000), sbp = (1040, 1000), dijonas = (0,0)}
    else if (colisao (jonas w) (bomba w))&&(senha w) then w{jonas = (1000,1000), bomba = (1000,1000), wjonas = (0,0)}
    else if (colisao (jonas w) (senhapos w)) then (changeSprayState.changeMMState.movementCompute.getWorldFrame) w{senhapos = (1000,1000), senha = True}
+   else if (areapers(jonas w) (aranha w) 200) then (changeSprayState.changeMMState.movementCompute.getWorldFrame) w{aranha = (perseguicao (aranha w) (jonas w) 0.5)}
    else (changeSprayState.changeMMState.movementCompute.getWorldFrame) w
 
 getRekt::([a],[a]) -> ((a,a),(a,a))
@@ -169,6 +170,12 @@ movementCompute w = w{jonas = (x',y')}
 getWorldFrame::World -> World
 getWorldFrame w = w{frame = ((frame w)+1)}
 
+perseguicao::(Float, Float)->(Float, Float)->Float->(Float, Float)
+perseguicao (x,y) (a,b) speed = (x',y')
+ where
+  x' = if x<a then x+speed else if x>a then x-speed else x
+  y' = if y<b then y+speed else if y>b then y-speed else y
+
 changeMMState::World -> World
 changeMMState w = if ((modFloat (frame w) 120)>60) then w{matamoscasstate = 1} else w{matamoscasstate = 0}
 
@@ -188,6 +195,12 @@ colisaoi::(Float,Float)->(Float,Float)->Bool
 colisaoi (x1,y1) (x2,y2) = 
  if (x1<=(x2-40) && (x1+10)>=(x2-40) && y1<=(y2+20) && (y1+10)>=(y2+20))||(x1<=(x2-40) && (x1+10)>=(x2-40) && y1>=(y2+20) && (y1-10)<=(y2+20))|| ---baixo esquerda, cima esquerda
  (x1>=(x2-40) && (x1-10)<=(x2-10) && y1<=(y2+20) && (y1+10)>=(y2+20))||(x1>=(x2-40) && (x1-10)<=(x2-10) && y1>=(y2+20) && (y1-10)<=(y2+20)) ---baixo direita, cima direita
+ then True else False
+
+areapers::(Float,Float)->(Float,Float)->Float->Bool
+areapers (x1,y1) (x2,y2) range = 
+ if (x1<=(x2) && (x1+range)>=(x2) && y1<=(y2) && (y1+range)>=(y2))||(x1<=(x2) && (x1+range)>=(x2) && y1>=(y2) && (y1-range)<=(y2))|| ---baixo esquerda, cima esquerda
+ (x1>=(x2) && (x1-range)<=(x2) && y1<=(y2) && (y1+range)>=(y2))||(x1>=(x2) && (x1-range)<=(x2) && y1>=(y2) && (y1-range)<=(y2)) ---baixo direita, cima direita
  then True else False
 
 colisaoParedes::World -> Int -> (Float, Float)
