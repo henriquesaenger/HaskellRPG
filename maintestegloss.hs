@@ -13,6 +13,7 @@ data World = Game
  , wjonas::(Float, Float)--jonas vitorioso
  , djonas::(Float, Float)--jonas morto
  , dijonas::(Float, Float)--jonas morto por inseticida
+ , spraystate::(Float)
  , upButton::Bool -- botao pressionado
  , downButton::Bool
  , rightButton::Bool
@@ -64,6 +65,7 @@ main = play
    , wjonas = (1000, 1000)
    , djonas = (1000, 1000)
    , dijonas = (1000,1000)
+   , spraystate = 0
    , downButton = False
    , rightButton = False
    , leftButton = False
@@ -90,8 +92,8 @@ main = play
    , translate (leftArg (aranha w)) (rightArg (aranha w)) imgaranha
    , translate (leftArg (bomba w)) (rightArg (bomba w)) imgbomba
    , translate (leftArg (jonas w)) (rightArg (jonas w)) imgjonas
-   , translate ((leftArg (sbp w))-25) ((rightArg (sbp w))+10) imgspray
-   , translate ((leftArg (raid w))-25) ((rightArg (raid w))+10) imgspray
+   , translate ((leftArg (sbp w))-25+1000*(spraystate w)) ((rightArg (sbp w))+10+1000*(spraystate w)) imgspray
+   , translate ((leftArg (raid w))-25+1000*(spraystate w)) ((rightArg (raid w))+10+1000*(spraystate w)) imgspray
    , translate (leftArg (wjonas w)) (rightArg (wjonas w)) imgwjonas
    , translate (leftArg (djonas w)) (rightArg (djonas w)) imgdjonas
    , translate (leftArg (dijonas w)) (rightArg (dijonas w)) imgdijonas
@@ -119,8 +121,9 @@ main = play
 
   updateFunc :: Float -> World -> World
   updateFunc _ w = if (colisao (jonas w) (aranha w))||(colisao (jonas w) (matamoscas w))||(colisao (jonas w) (raid w))||(colisao (jonas w) (sbp w)) then w{jonas = (1000,1000), sbp = (1000,1000), djonas = (0,0)}
-   else if (colisaoi (jonas w) (sbp w))||(colisaoi (jonas w) (raid w)) then w{jonas = (1000,1000), sbp = (1040, 1000), dijonas = (0,0)}
-   else (changeMMState.movementCompute.getWorldFrame) w
+   else if ((colisaoi (jonas w) (sbp w))&&((spraystate w)==0))||((colisaoi (jonas w) (raid w))&&((spraystate w)==0)) then w{jonas = (1000,1000), sbp = (1040, 1000), dijonas = (0,0)}
+   else if (colisao (jonas w) (bomba w)) then w{jonas = (1000,1000), bomba = (1000,1000), wjonas = (0,0)}
+   else (changeSprayState.changeMMState.movementCompute.getWorldFrame) w
 
 getRekt::([a],[a]) -> ((a,a),(a,a))
 getRekt (a, b) = (((primeiro a),(primeiro b)),((primeiro(reverse a)), (primeiro(reverse b))))
@@ -159,6 +162,9 @@ getWorldFrame w = w{frame = ((frame w)+1)}
 
 changeMMState::World -> World
 changeMMState w = if ((modFloat (frame w) 120)>60) then w{matamoscasstate = 1} else w{matamoscasstate = 0}
+
+changeSprayState::World -> World
+changeSprayState w = if ((modFloat (frame w) 120)>60) then w{spraystate = 1} else w{spraystate = 0}
 
 modFloat::Float -> Float -> Float
 modFloat a b = fromIntegral((round a) `mod` (round b))
