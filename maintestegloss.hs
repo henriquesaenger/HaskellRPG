@@ -149,7 +149,41 @@ main = play
   inputHandler (EventKey (Char 'd') Up _ _) w = w{rightButton = False}
   inputHandler (EventKey (Char 'a') Down _ _) w = w{leftButton = True}
   inputHandler (EventKey (Char 'a') Up _ _) w = w{leftButton = False}
-  --inputHandler (EventKey (Char 'r') Down _ _) w = (initialModel w)
+  inputHandler (EventKey (Char 'r') Down _ _) w = w{jonas = (-490,-280)
+   , sbp = (30, -275)
+   , upsbp = True
+   , upraid = True
+   , esqmm = True
+   , matamoscas = (470,150)
+   , matamoscasstate = 0
+   , raid = (480, -275)
+   , aranha = (-350, 155)
+   , bomba = (-480, 280)
+   , wjonas = (1000, 1000)
+   , djonas = (1000, 1000)
+   , dijonas = (1000,1000)
+   , spraystate = 0
+   , comida1 = (255,-285)
+   , comida2 = (470,280)
+   , senhapos = (305,-280)
+   , senha = False
+   , velocidade = 1
+   , gameover = 1
+   , victory = 1
+   , upButton = False
+   , downButton = False
+   , rightButton = False
+   , leftButton = False
+   , paredes = --quando chegar no 0, sempre iniciar uma nova parede
+    [(map fromIntegral [-512,-511..(290)],map fromIntegral [0,1..(25)])--parede central
+    ,(map fromIntegral [365,366..(512)],map fromIntegral [0,1..(25)])--resto parede central
+    ,(map fromIntegral [-175,-176..(-200)],map fromIntegral [100,101..(300)])--parede sala bomba
+    ,(map fromIntegral [-337,-336..(437)],map fromIntegral [-75,-76..(-100)])--parede cozinha para corredor
+    ,(map fromIntegral [265,266..(290)],map fromIntegral [-75,-76..(-300)])--parede sala senha
+    ,(map fromIntegral [-437,-436..(-412)],map fromIntegral [-75,-76..(-300)])--parede cozinha - barata
+    ]
+   , frame = 0
+   }
   inputHandler _ w = w
 
   updateFunc :: Float -> World -> World
