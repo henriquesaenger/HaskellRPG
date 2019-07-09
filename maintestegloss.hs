@@ -276,28 +276,6 @@ colisaoParedes w 4 = (x',y) --left
   p = paredes w
   x' = if x>(-490)&& not (parede (x-(10+(velocidade w)),y) p) then x-(velocidade w) else x
 
-moveJonas::World -> Int -> World
-moveJonas w 1 = w {jonas = (x,y')}
- where
-  (x,y) = jonas w
-  p = paredes w
-  y' = if y<(280)&& not (parede (x,y+10) p) then (y+10) else y
-moveJonas w 2 = w {jonas = (x,y')}
- where
-  (x,y) = jonas w
-  p = paredes w
-  y' = if y>(-280)&& not (parede (x,y-10) p) then y-10 else y
-moveJonas w 3 = w {jonas = (x',y)}
- where
-  (x,y) = jonas w
-  p = paredes w
-  x' = if x<(490)&& not (parede (x+10,y) p) then x+10 else x
-moveJonas w 4 = w {jonas = (x',y)}
- where
-  (x,y) = jonas w
-  p = paredes w
-  x' = if x>(-490)&& not (parede (x-10,y) p) then x-10 else x
-
 parede::(Float, Float) -> [([Float],[Float])] -> Bool
 parede (x,y) [] = False
 parede (x,y) ((a,b):l) = if (pertence x a) && (pertence y b) then True else parede (x,y) (l)
